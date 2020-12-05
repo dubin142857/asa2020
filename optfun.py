@@ -23,12 +23,12 @@ def signle_flip(image,q):
     state_list=list(range(1,q+1))
     state_list.remove(q_xy)
     # old_state=image[random_x,random_y]
-    image[random_x,random_y]=choice(state_list)
+    #image[random_x,random_y]=choice(state_list)
     # delta_state=image[random_x,random_y]-old_state
     # new_image=image.copy()
     # new_image[random_x,random_y]=delta_state
     # #delta_hamilton=hamiltonian(new_image, J, h)
-    return image
+    return random_x,random_y,choice(state_list)
 
 def wolf(grid,q,beta,J,h):
     """
@@ -109,7 +109,7 @@ def initialize(N,p):
     initialized image.
 
     """
-    return np.random.randint(1,4,size=(N,N))
+    return np.random.randint(1,p,size=(N,N))
 def hamiltonian(image,J,h):
     """"
     Usage: this function is used to compute the hamiltonian of system image
@@ -123,8 +123,39 @@ def hamiltonian(image,J,h):
     hamilton=np.sum(ham_matrix)
     if h!=0:
         hamilton+=-h*(np.sum(image))
-    return hamilton
+    return hamilton/2
 
+def kronecker(C1, C2):
+    if(C1 == C2):
+        return 1
+    else:
+        return 0
+def hamiltonian_diff(C,Crand,i,j):
+    """
+    This function is used to find different hamiltonian between origin image and new image computed by single_flip
+
+    Parameters
+    ----------
+    image : origin image
+    (i,j):the position of point which needs to be fliped
+
+    Returns
+    -------
+   diff_hamiltonian.
+
+    """
+    L = len(C)
+
+    Eright1, Eleft1 = kronecker(C[i,j], C[i, (j+1)%L]), kronecker(C[i,j], C[i, (j-1)%L])
+    Etop1, Ebot1 = kronecker(C[i,j], C[(i-1)%L, j]), kronecker(C[i,j], C[(i+1)%L, j])
+    Sum1 = -(Eright1+Eleft1+Etop1+Ebot1)
+
+
+    Eright2, Eleft2 = kronecker(Crand, C[i, (j+1)%L]), kronecker(Crand, C[i, (j-1)%L])
+    Etop2, Ebot2 = kronecker(Crand, C[(i-1)%L, j]), kronecker(Crand, C[(i+1)%L, j])
+    Sum2 = -(Eright2+Eleft2+Etop2+Ebot2)
+
+    return Sum2-Sum1
 def metropolis(image,J=1,h=0,q=3,k_B=1,init_temp=1,proposal_type="signle_flip"):
     """
     Usage:use to metropolis algorithm to solve MC intergal.
@@ -140,23 +171,23 @@ def metropolis(image,J=1,h=0,q=3,k_B=1,init_temp=1,proposal_type="signle_flip"):
     """
     beta=1/(k_B*init_temp)
     N=int(image.shape[0])
-    new_image=np.zeros_like(image)
-    hamilton_list=[]
-    hamilton_list.append(hamiltonian(image, J, h))
-    if proposal_type =="signle_flip":
-        new_image=signle_flip(image,q)
-        hamilton_list.append(hamiltonian(new_image,J,h))
-        delta_hamilton=hamilton_list[-1]-hamilton_list[-2]
-        if delta_hamilton<=0:
-            pass
+    ham=hamiltonian(image, J, h)
+    for i in range(N*N):
+        #if proposal_type=="single_flip"
+        x,y,state_new=signle_flip(image,q)
+        ham_diff=hamiltonian_diff(image,state_new,x,y)
+        if ham_diff<0:
+            image[x,y]=state_new
+            ham+=ham_diff
         else:
             r=np.random.random()
-            if r<=np.exp(-beta*delta_hamilton):
-                pass
+            if r<np.exp(-beta*ham_diff):
+                image[x,y]=state_new
+                ham+=ham_diff
             else:
-                hamilton_list[-1]=hamilton_list[-2]
-                new_image=image.copy()
-    return hamilton_list[-1],new_image
+                pass
+    
+    return ham,image
 
 def temper_choice(temper_now,temper_list):
     """

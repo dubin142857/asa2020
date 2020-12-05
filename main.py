@@ -32,16 +32,16 @@ internal_energy     =[]
 heat                =[]
 
 magnetization       =[]
-temper_range        =np.linspace(0.1,5,num=100)
+temper_range        =np.linspace(0.1,2,num=50)
 beta_range          =(1/(k_B*np.array(temper_range))).tolist()
-image               = optfun.initialize(N,q)
+#image               = optfun.initialize(N,q)
 for temper in temper_range:
-    #image               = optfun.initialize(N,q)
+    image               = optfun.initialize(N,q)
     beta                =1./(k_B*temper)
     hamilton_list       =[]
     magnetization_list  =[]
-    # for i in range(warm_iter):
-    #     hamilton,image=optfun.metropolis(image,J,h,q,k_B,init_temp=temper,proposal_type="signle_flip")
+    for i in range(warm_iter):
+        hamilton,image=optfun.metropolis(image,J,h,q,k_B,init_temp=temper,proposal_type="signle_flip")
     for i in range(max_iter):
         hamilton,image=optfun.metropolis(image,J,h,q,k_B,init_temp=temper,proposal_type="signle_flip")
         hamilton_list.append(hamilton)
@@ -92,7 +92,7 @@ if output_image=="None":
     ax.set_ylabel('magnetization')
     plt.legend()
     plt.show()
-    fig.savefig('magnetization'+output_image,dpi=200)
+    fig2.savefig('magnetization'+output_image,dpi=200)
 
 
 

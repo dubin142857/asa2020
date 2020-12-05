@@ -11,7 +11,7 @@ import sys, getopt
 def  default_options():
     options = {
         "--proposal_type":"signle_flip",
-        "--N":10,
+        "--N":8,
         "--J":1,
         "--h":0,
         "--k_B":1,
